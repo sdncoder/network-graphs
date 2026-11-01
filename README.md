@@ -5,4 +5,4 @@ its own README.
 
 | Model | Description |
 |---|---|
-| [backbone-split5](backbone-split5/) | Backbone1 core + station edges with estimated per-link latency |
+| [backbone5](backbone5/) | Backbone1 core + edges with estimated per-link latency |

@@ -1,18 +1,18 @@
-# Backbone-Split5 — Backbone1 + Station Edges
+# Backbone5 — Backbone1 + Edges
 
-NetworkX model of the Backbone1 core and its station edges, built from the
+NetworkX model of the Backbone1 core and its edges, built from the
 `BackboneSplit` sheet of `Backbone-Split5.numbers`. Backbone2 is not included.
 
-![Backbone-Split5 model](backbone_split5_model.png)
+![Backbone5 model](backbone5_model.png)
 
 ## What it shows
 
 | Element | Style |
 |---|---|
 | Backbone1 sites (13) | White nodes, dark outline |
-| Station sites (24) | Light grey, small nodes |
+| Edge sites (24) | Light grey, small nodes |
 | Backbone1 links (24) | Dark straight lines, labelled with estimated one-way latency |
-| Station links (48) | Grey straight lines |
+| Edge links (48) | Grey straight lines |
 
 Nodes are intentionally unlabelled.
 
@@ -32,7 +32,7 @@ the script.
 ## Data handling
 
 - Duplicate rows on the sheet (DRT–HAL1, CHI–ATL) are drawn once.
-- `ASH1` in the Station Edges is treated as `ASH`.
+- `ASH1` in the Edges is treated as `ASH`.
 - MXC is excluded: both of its links home to Backbone2-only sites (TC, DRT2).
 - The Location cells "SEC1aucus NJ" and "HAL1sey NJ" are read as Secaucus and
   Halsey (Newark).
@@ -41,7 +41,7 @@ the script.
 
 ```bash
 pip install networkx matplotlib numbers-parser
-python backbone_split5_model.py Backbone-Split5.numbers backbone_split5_model.png
+python backbone5_model.py Backbone-Split5.numbers backbone5_model.png
 ```
 
 The script prints node and link counts, any rows it skipped or renamed, and a

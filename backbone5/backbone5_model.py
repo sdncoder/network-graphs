@@ -1,7 +1,7 @@
 """
-Backbone-Split5 network model (NetworkX)
+Backbone5 network model (NetworkX)
 
-Builds the Backbone1 core plus the Station Edges from the "BackboneSplit"
+Builds the Backbone1 core plus the Edges from the "BackboneSplit"
 sheet of Backbone-Split5.numbers. Backbone2 columns are ignored.
 
 Each Backbone1 link carries an estimated one-way latency, derived from the
@@ -16,13 +16,13 @@ site locations listed on the "Backbone1" sheet:
 
 Styling
   - Backbone1 nodes : white, dark outline, no labels
-  - Station nodes   : light grey, small, no labels
+  - Edge nodes      : light grey, small, no labels
   - All links       : straight lines, drawn beneath the nodes
   - Backbone1 links : labelled with estimated latency (ms)
 
 Usage
   pip install networkx matplotlib numbers-parser
-  python backbone_split5_model.py Backbone-Split5.numbers [output.png]
+  python backbone5_model.py Backbone-Split5.numbers [output.png]
 """
 
 import math
@@ -37,7 +37,7 @@ SITE_SHEET = "Backbone1"
 
 # Column positions on the BackboneSplit sheet (0-based)
 BB1_A, BB1_Z, BB1_LINKS, BB1_BW = 0, 1, 2, 3          # Backbone1 block
-ST_A, ST_Z, ST_LINKS, ST_BW = 13, 14, 15, 16          # Station Edges block
+ST_A, ST_Z, ST_LINKS, ST_BW = 13, 14, 15, 16          # Edges block
 DATA_START_ROW = 2                                    # rows 0-1 are headers
 
 # Site / Location columns on the Backbone1 sheet
@@ -90,10 +90,10 @@ BACKBONE_POS = {
     "ATL": (11.0, 1.5), "MIA": (14.0, -0.5),
 }
 
-# Slots for station nodes, keyed by the (sorted) Backbone1 hubs they home to.
-# Each group sits in open space beside its hubs so no station line lies on
-# top of a backbone link and no two stations share a position.
-STATION_SLOTS = {
+# Slots for edge nodes, keyed by the (sorted) Backbone1 hubs they home to.
+# Each group sits in open space beside its hubs so no edge line lies on
+# top of a backbone link and no two edge nodes share a position.
+EDGE_SLOTS = {
     ("HAL1", "SEC1"): [(12.0, 11.0), (12.9, 11.2), (13.8, 11.2), (14.7, 11.0)],
     ("LA", "SNJ"):    [(-1.4, 2.6), (-1.4, 3.4), (-1.4, 4.2), (-1.4, 5.0)],
     ("DEN", "DRY"):   [(5.1, 5.3), (5.1, 6.0)],
@@ -119,14 +119,14 @@ def load(path):
     sheets = {s.name: s for s in doc.sheets}
 
     rows = list(sheets[SPLIT_SHEET].tables[0].rows(values_only=True))
-    backbone, stations = [], []
+    backbone, edge_rows = [], []
     for r in rows[DATA_START_ROW:]:
         a, z = clean(r[BB1_A]), clean(r[BB1_Z])
         if a and z:
             backbone.append((a, z, int(r[BB1_LINKS] or 1), clean(r[BB1_BW])))
         a, z = clean(r[ST_A]), clean(r[ST_Z])
         if a and z:
-            stations.append((a, z, int(r[ST_LINKS] or 1), clean(r[ST_BW])))
+            edge_rows.append((a, z, int(r[ST_LINKS] or 1), clean(r[ST_BW])))
 
     sites = {}
     for r in list(sheets[SITE_SHEET].tables[0].rows(values_only=True))[1:]:
@@ -134,7 +134,7 @@ def load(path):
         if site and loc:
             sites[site] = LOCATION_FIXES.get(loc, loc)
 
-    return backbone, stations, sites
+    return backbone, edge_rows, sites
 
 
 # ---------------------------------------------------------------- latency
@@ -153,7 +153,7 @@ def latency_ms(km):
 
 # ---------------------------------------------------------------- graph
 
-def build_graph(backbone, stations, sites):
+def build_graph(backbone, edge_rows, sites):
     G = nx.Graph()
     dupes, offnet, aliased = [], [], []
 
@@ -175,21 +175,21 @@ def build_graph(backbone, stations, sites):
             d["latency_ms"] = latency_ms(d["km"])
 
     bb_nodes = set(G.nodes)
-    for st, hub, links, bw in stations:
+    for st, hub, links, bw in edge_rows:
         if hub in HUB_ALIASES:
             aliased.append((st, hub, HUB_ALIASES[hub]))
             hub = HUB_ALIASES[hub]
         if hub not in bb_nodes:              # hub is on Backbone2 only
             offnet.append((st, hub))
             continue
-        G.add_node(st, role="station")
+        G.add_node(st, role="edge")
         if G.has_edge(st, hub):
             dupes.append((st, hub))
             continue
-        G.add_edge(st, hub, role="station", links=links, bw=bw)
+        G.add_edge(st, hub, role="edge", links=links, bw=bw)
 
-    # A station whose every hub is off Backbone1 never got a node; any
-    # partially-homed station keeps its Backbone1 links.
+    # An edge node whose every hub is off Backbone1 never got a node; any
+    # partially-homed edge node keeps its Backbone1 links.
     return G, dupes, offnet, aliased
 
 
@@ -201,10 +201,10 @@ def layout(G):
 
     used, unplaced = {}, []
     for n, d in G.nodes(data=True):
-        if d["role"] != "station":
+        if d["role"] != "edge":
             continue
         key = tuple(sorted(G.neighbors(n)))
-        slots = STATION_SLOTS.get(key, [])
+        slots = EDGE_SLOTS.get(key, [])
         i = used.get(key, 0)
         if i < len(slots):
             pos[n] = slots[i]
@@ -212,7 +212,7 @@ def layout(G):
         else:
             unplaced.append(n)
 
-    # Stations not covered by a slot (new rows on the sheet) are placed by a
+    # Edge nodes not covered by a slot (new rows on the sheet) are placed by a
     # spring layout with everything else held fixed.
     if unplaced:
         for n in unplaced:
@@ -244,9 +244,9 @@ def fmt_ms(ms):
 
 def draw(G, pos, out):
     bb = [n for n, d in G.nodes(data=True) if d["role"] == "backbone1"]
-    st = [n for n, d in G.nodes(data=True) if d["role"] == "station"]
+    st = [n for n, d in G.nodes(data=True) if d["role"] == "edge"]
     bb_edges = [(u, v) for u, v, d in G.edges(data=True) if d["role"] == "backbone1"]
-    st_edges = [(u, v) for u, v, d in G.edges(data=True) if d["role"] == "station"]
+    st_edges = [(u, v) for u, v, d in G.edges(data=True) if d["role"] == "edge"]
 
     fig, ax = plt.subplots(figsize=(18, 11))
     fig.patch.set_facecolor("white")
@@ -279,7 +279,7 @@ def draw(G, pos, out):
                 bbox=dict(boxstyle="round,pad=0.22", fc="white",
                           ec="#1f1f1f", lw=0.6))
 
-    ax.set_title("Backbone-Split5 — Backbone1 + Station Edges "
+    ax.set_title("Backbone5 — Backbone1 + Edges "
                  "(estimated one-way latency)", fontsize=15, pad=14)
     fig.text(0.5, 0.02,
              f"Latency = great-circle distance × {ROUTE_FACTOR} route factor × "
@@ -297,21 +297,21 @@ def draw(G, pos, out):
 
 def main():
     src = sys.argv[1] if len(sys.argv) > 1 else "Backbone-Split5.numbers"
-    out = sys.argv[2] if len(sys.argv) > 2 else "backbone_split5_model.png"
+    out = sys.argv[2] if len(sys.argv) > 2 else "backbone5_model.png"
 
-    backbone, stations, sites = load(src)
-    G, dupes, offnet, aliased = build_graph(backbone, stations, sites)
+    backbone, edge_rows, sites = load(src)
+    G, dupes, offnet, aliased = build_graph(backbone, edge_rows, sites)
 
     bb = [n for n, d in G.nodes(data=True) if d["role"] == "backbone1"]
-    st = [n for n, d in G.nodes(data=True) if d["role"] == "station"]
+    st = [n for n, d in G.nodes(data=True) if d["role"] == "edge"]
     n_bb = sum(1 for *_, d in G.edges(data=True) if d["role"] == "backbone1")
-    print(f"Backbone1 nodes: {len(bb)}   Station nodes: {len(st)}")
-    print(f"Backbone1 links: {n_bb}   Station links: {G.number_of_edges() - n_bb}")
+    print(f"Backbone1 nodes: {len(bb)}   Edge nodes: {len(st)}")
+    print(f"Backbone1 links: {n_bb}   Edge links: {G.number_of_edges() - n_bb}")
     print(f"Connected: {nx.is_connected(G)}")
     if dupes:
         print("Duplicate rows skipped:", ", ".join(f"{a}-{z}" for a, z in dupes))
     if offnet:
-        print("Station edges skipped (hub not on Backbone1):",
+        print("Edges skipped (hub not on Backbone1):",
               ", ".join(f"{a}-{z}" for a, z in offnet))
     for s, old, new in aliased:
         print(f"Hub renamed: {s}-{old} treated as {s}-{new}")
