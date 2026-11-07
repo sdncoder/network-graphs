@@ -87,7 +87,7 @@ for n, d in G.nodes(data=True):
     x, y, w, h = box(n)
     if d["kind"] == "site":
         style = ("ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1A1A1A;"
-                 "strokeWidth=4;fontStyle=1;fontSize=17;fontColor=#1A1A1A;")
+                 f"strokeWidth=4;fontStyle=1;fontSize={17 if len(n) <= 4 else 14};fontColor=#1A1A1A;")
         label = n
     else:
         style = ("rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#FFFFFF;"

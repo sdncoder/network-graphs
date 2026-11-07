@@ -22,10 +22,10 @@ python lowlatency-plan1/export_drawio.py
 
 | Element | Detail |
 |---|---|
-| Sites (10) | LA, SEC2, HAL2, NYC, CT, WDC, MIA, TEL, WOK, OST. White circles; LA, SEC2, MIA, TEL and WOK have a CGX badge |
-| Regions | **NJ Metro** = SEC2 + HAL2 (about 9 miles apart); **London** = TEL + WOK + OST. Dotted boxes |
+| Sites (10) | LA, NJ-1, NJ-2, NYC, CT, WDC, MIA, LON-1, LON-2, LON-3. White circles; LA, NJ-1, MIA, LON-1 and LON-2 have a CGX badge |
+| Regions | **NJ Metro** = NJ-1 + NJ-2; **London** = LON-1 + LON-2 + LON-3. Dotted boxes |
 | Backbone | 22 links, 34 circuits. Straight parallel lines, one per circuit, with a count label |
-| On-ramps | 9 AWS and Internet edges, 2 circuits each. AWS West at SEC2 and LA, AWS East at HAL2 and MIA, Internet at SEC2, LA, MIA, CT and WOK |
+| On-ramps | 9 AWS and Internet edges, 2 circuits each. AWS West at NJ-1 and LA, AWS East at NJ-2 and MIA, Internet at NJ-1, LA, MIA, CT and LON-2 |
 
 ## How it is modeled
 
@@ -37,13 +37,13 @@ python lowlatency-plan1/export_drawio.py
   - WDC and MIA run down the east coast.
   - London is across the Atlantic.
 
-  HAL2 and NYC are nudged off their true bearings so no line passes through them.
+  NJ-2 and NYC are nudged off their true bearings so no line passes through them.
 - **Visibility checks.** Every run confirms that no line passes behind a site or cloud it doesn't connect to, and that no outside node falls inside a region box.
 
 ## Key findings
 
 - **No single points of failure.** The backbone stays connected after losing any one site or any one link (node and edge connectivity are both 2).
-- **NJ Metro is the core.** SEC2 has 13 backbone circuits to 8 sites, and HAL2 has 12 circuits to 8 sites.
-- **London has 4 single circuits back to NJ Metro**: SEC2–TEL, SEC2–WOK, HAL2–TEL and HAL2–WOK. OST is reachable only through TEL and WOK.
+- **NJ Metro is the core.** NJ-1 has 13 backbone circuits to 8 sites, and NJ-2 has 12 circuits to 8 sites.
+- **London has 4 single circuits back to NJ Metro**: NJ-1–LON-1, NJ-1–LON-2, NJ-2–LON-1 and NJ-2–LON-2. LON-3 is reachable only through LON-1 and LON-2.
 - **LA–MIA is the heaviest link**, with 4 circuits.
 - **12 single-circuit links.** See `report.txt` for the full list.
