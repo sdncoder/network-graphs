@@ -87,7 +87,7 @@ for n, d in G.nodes(data=True):
     x, y, w, h = box(n)
     if d["kind"] == "site":
         style = ("ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#1A1A1A;"
-                 f"strokeWidth=4;fontStyle=1;fontSize={17 if len(n) <= 4 else 14};fontColor=#1A1A1A;")
+                 f"strokeWidth=4;fontStyle=1;fontSize=17;fontColor=#1A1A1A;")
         label = n
     else:
         style = ("rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#FFFFFF;"
@@ -108,6 +108,7 @@ links = {}
 for a, b, d in G.edges(data=True):
     links.setdefault((a, b), d)
 
+placed = m.place_labels(G) if hasattr(m, "place_labels") else {}
 edge_n = 0
 for (a, b), d in links.items():
     n = d["of"]
@@ -125,12 +126,17 @@ for (a, b), d in links.items():
                  f"entryX={tx:.4f};entryY={ty:.4f};entryDx=0;entryDy=0;entryPerimeter=0;")
         cells.append(f'<mxCell id="e{edge_n}" value="" style="{style}" edge="1" parent="1" '
                      f'source="{cid(a)}" target="{cid(b)}"><mxGeometry relative="1" as="geometry"/></mxCell>')
-    t = LABEL_T.get((a, b), 0.5 if d["kind"] == "backbone" else 0.55)
-    lx, ly = x1 + (x2 - x1) * t, y1 + (y2 - y1) * t
-    cells.append(f'<mxCell id="lbl{edge_n}" value="{n}" style="rounded=1;whiteSpace=wrap;html=1;'
-                 f'fillColor=#FFFFFF;strokeColor=#1A1A1A;strokeWidth=1;fontStyle=1;fontSize=14;" '
-                 f'vertex="1" parent="1"><mxGeometry x="{lx - 11:.1f}" y="{ly - 13:.1f}" width="22" '
-                 f'height="26" as="geometry"/></mxCell>')
+    if (a, b) in placed:
+        lx, ly, txt = placed[(a, b)]
+    else:
+        t = LABEL_T.get((a, b), 0.5 if d["kind"] == "backbone" else 0.55)
+        lx, ly, txt = x1 + (x2 - x1) * t, y1 + (y2 - y1) * t, str(n)
+    w, h = (22, 26) if txt.isdigit() else (7.2 * len(txt) + 10, 24)
+    fs = 14 if txt.isdigit() else 11
+    cells.append(f'<mxCell id="lbl{edge_n}" value="{escape(txt)}" style="rounded=1;whiteSpace=wrap;html=1;'
+                 f'fillColor=#FFFFFF;strokeColor=#1A1A1A;strokeWidth=1;fontStyle=1;fontSize={fs};" '
+                 f'vertex="1" parent="1"><mxGeometry x="{lx - w / 2:.1f}" y="{ly - h / 2:.1f}" width="{w:.1f}" '
+                 f'height="{h}" as="geometry"/></mxCell>')
 
 xml = (f'<mxfile host="drawio"><diagram id="plan" name="{escape(TITLE)}">'
        '<mxGraphModel dx="2200" dy="1700" grid="0" gridSize="10" guides="1" tooltips="1" '

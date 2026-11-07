@@ -1,0 +1,43 @@
+Link,Type,Circuit,Route,Lateral offset km,Great-circle km,Est. route km,One-way ms,KMZ placemark
+NJ-1–NYC,Backbone,1/2,direct,0,8,11,0.05,NJ-1–NYC c1
+NJ-1–NYC,Backbone,2/2,diverse 1,-3,8,14,0.07,NJ-1–NYC c2
+NJ-1–CT,Backbone,1/2,direct,0,60,79,0.38,NJ-1–CT c1
+NJ-1–CT,Backbone,2/2,diverse 1,-7,60,81,0.40,NJ-1–CT c2
+NJ-1–LON-1,Backbone,1/1,direct,0,"5,579","7,253",35.5,NJ-1–LON-1 c1
+NJ-1–WDC,Backbone,1/1,direct,0,325,423,2.1,NJ-1–WDC c1
+NJ-1–LON-2,Backbone,1/1,direct,0,"5,547","7,210",35.3,NJ-1–LON-2 c1
+NJ-1–NJ-2,Backbone,1/2,direct,0,14,18,0.09,NJ-1–NJ-2 c1
+NJ-1–NJ-2,Backbone,2/2,diverse 1,+3,14,20,0.10,NJ-1–NJ-2 c2
+NJ-1–LA,Backbone,1/2,direct,0,"3,938","5,120",25.1,NJ-1–LA c1
+NJ-1–LA,Backbone,2/2,diverse 1,-473,"3,938","5,290",25.9,NJ-1–LA c2
+NJ-1–MIA,Backbone,1/2,direct,0,"1,766","2,296",11.3,NJ-1–MIA c1
+NJ-1–MIA,Backbone,2/2,diverse 1,+212,"1,766","2,375",11.6,NJ-1–MIA c2
+NJ-2–NYC,Backbone,1/1,direct,0,20,26,0.13,NJ-2–NYC c1
+NYC–LA,Backbone,1/1,direct,0,"3,947","5,131",25.1,NYC–LA c1
+NYC–CT,Backbone,1/1,direct,0,54,70,0.34,NYC–CT c1
+NJ-2–CT,Backbone,1/2,direct,0,74,96,0.47,NJ-2–CT c1
+NJ-2–CT,Backbone,2/2,diverse 1,-9,74,99,0.49,NJ-2–CT c2
+NJ-2–LON-1,Backbone,1/1,direct,0,"5,593","7,270",35.6,NJ-2–LON-1 c1
+NJ-2–WDC,Backbone,1/1,direct,0,312,405,2.0,NJ-2–WDC c1
+WDC–MIA,Backbone,1/1,direct,0,"1,491","1,938",9.5,WDC–MIA c1
+NJ-2–LON-2,Backbone,1/1,direct,0,"5,560","7,228",35.4,NJ-2–LON-2 c1
+NJ-2–LA,Backbone,1/2,direct,0,"3,931","5,110",25.0,NJ-2–LA c1
+NJ-2–LA,Backbone,2/2,diverse 1,-472,"3,931","5,280",25.9,NJ-2–LA c2
+NJ-2–MIA,Backbone,1/2,direct,0,"1,753","2,279",11.2,NJ-2–MIA c1
+NJ-2–MIA,Backbone,2/2,diverse 1,+210,"1,753","2,357",11.6,NJ-2–MIA c2
+LON-1–LON-3,Backbone,1/1,direct,0,21,27,0.13,LON-1–LON-3 c1
+LON-1–LON-2,Backbone,1/2,direct,0,47,61,0.30,LON-1–LON-2 c1
+LON-1–LON-2,Backbone,2/2,diverse 1,+6,47,63,0.31,LON-1–LON-2 c2
+LON-2–LON-3,Backbone,1/1,direct,0,30,40,0.19,LON-2–LON-3 c1
+LA–MIA,Backbone,1/4,direct,0,"3,753","4,878",23.9,LA–MIA c1
+LA–MIA,Backbone,2/4,diverse 1,-450,"3,753","5,041",24.7,LA–MIA c2
+LA–MIA,Backbone,3/4,diverse 2,-901,"3,753","5,488",26.9,LA–MIA c3
+LA–MIA,Backbone,4/4,diverse 3,-1351,"3,753","6,136",30.1,LA–MIA c4
+NJ-1–AWS West,AWS on-ramp,1/2,direct,0,"3,680","4,784",23.4,NJ-1–AWS West c1
+NJ-1–AWS West,AWS on-ramp,2/2,diverse 1,-442,"3,680","4,944",24.2,NJ-1–AWS West c2
+NJ-2–AWS East,AWS on-ramp,1/2,direct,0,336,437,2.1,NJ-2–AWS East c1
+NJ-2–AWS East,AWS on-ramp,2/2,diverse 1,+40,336,452,2.2,NJ-2–AWS East c2
+LA–AWS West,AWS on-ramp,1/2,direct,0,"1,310","1,703",8.3,LA–AWS West c1
+LA–AWS West,AWS on-ramp,2/2,diverse 1,+157,"1,310","1,762",8.6,LA–AWS West c2
+MIA–AWS East,AWS on-ramp,1/2,direct,0,"1,497","1,946",9.5,MIA–AWS East c1
+MIA–AWS East,AWS on-ramp,2/2,diverse 1,-180,"1,497","2,013",9.9,MIA–AWS East c2

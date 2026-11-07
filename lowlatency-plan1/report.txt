@@ -23,4 +23,34 @@ Min site cut (node connectivity): 2
 Min link cut (edge connectivity): 2
 Single-circuit links: NJ-1-LON-1, NJ-1-WDC, NJ-1-LON-2, NJ-2-NYC, NYC-LA, NYC-CT, NJ-2-LON-1, NJ-2-WDC, WDC-MIA, NJ-2-LON-2, LON-1-LON-3, LON-2-LON-3
 
+Estimated one-way latency (each circuit on its own diverse path)
+  route = diverse path x 1.3, 4.9 us/km fiber
+  Link             Ckts   GC km          Route km     One-way ms
+  NJ-1-NYC            2       8             11-14      0.05-0.07
+  NJ-1-NJ-2           2      14             18-20      0.09-0.10
+  NJ-2-NYC            1      20                26           0.13
+  LON-1-LON-3         1      21                27           0.13
+  LON-2-LON-3         1      30                40           0.19
+  LON-1-LON-2         2      47             61-63      0.30-0.31
+  NYC-CT              1      54                70           0.34
+  NJ-1-CT             2      60             79-81      0.38-0.40
+  NJ-2-CT             2      74             96-99      0.47-0.49
+  NJ-2-WDC            1     312               405            2.0
+  NJ-1-WDC            1     325               423            2.1
+  NJ-2-AWS East       2     336           437-452        2.1-2.2
+  LA-AWS West         2   1,310       1,703-1,762        8.3-8.6
+  WDC-MIA             1   1,491             1,938            9.5
+  MIA-AWS East        2   1,497       1,946-2,013        9.5-9.9
+  NJ-2-MIA            2   1,753       2,279-2,357      11.2-11.6
+  NJ-1-MIA            2   1,766       2,296-2,375      11.3-11.6
+  NJ-1-AWS West       2   3,680       4,784-4,944      23.4-24.2
+  LA-MIA              4   3,753       4,878-6,136      23.9-30.1
+  NJ-2-LA             2   3,931       5,110-5,280      25.0-25.9
+  NJ-1-LA             2   3,938       5,120-5,290      25.1-25.9
+  NYC-LA              1   3,947             5,131           25.1
+  NJ-1-LON-2          1   5,547             7,210           35.3
+  NJ-2-LON-2          1   5,560             7,228           35.4
+  NJ-1-LON-1          1   5,579             7,253           35.5
+  NJ-2-LON-1          1   5,593             7,270           35.6
+
 Line visibility: all clear

@@ -1,11 +1,21 @@
 """
 Low Latency Prem-to-Cloud Plan1 — NetworkX model.
 
-Based on the New Backbone1 model, with these Plan1 changes:
-  * new backbone link NYC–CT (1 circuit)
+Plan1 features:
   * dotted "London" region box around LON-1, LON-2 and LON-3
   * dotted "NJ Metro" region box around NJ-1 and NJ-2
-  * Azure connections removed (AWS and Internet only)
+  * AWS and Internet on-ramps
+  * estimated one-way latency per circuit, each circuit on its own diverse path
+
+Latency estimate (per circuit):
+    route_km   = length of that circuit's estimated diverse path x ROUTE_FACTOR
+    latency_ms = route_km x FIBER_US_PER_KM / 1000
+Circuit 1 on a link takes the direct (great-circle) route. Each further
+circuit takes its own diverse route, bowed out progressively further
+(1, 2, 3 x spacing). In North America the bow goes inland, toward the middle
+of the continental US, so alternates stay over land; elsewhere it goes to the
+right of A->Z. Circuits never share a route and the alternates are longer. Fiber propagation
+only: equipment, queueing and serialization delay are excluded.
 
 Every circuit is its own edge in a MultiGraph and is drawn as a separate
 straight line, offset in parallel so circuit diversity is visible.
@@ -68,7 +78,7 @@ BACKBONE = [
 
 CLOUDS = [
     ("NJ-1", "Internet",  (760, 60), 2),
-    ("NJ-1", "AWS West",  (500, 260), 2),
+    ("NJ-1", "AWS West",  (330, 250), 2),
     ("NJ-2", "AWS East",  (1110, 690), 2),
     ("CT",   "Internet",  (1480, 120), 2),
     ("LA",   "AWS West",  (90, 860), 2),
@@ -84,6 +94,147 @@ REGIONS = {
     "London": (["LON-1", "LON-2", "LON-3"], 70, 0.6, "top"),
     "NJ Metro": (["NJ-1", "NJ-2"], 60, 0.03, "top"),
 }
+
+# ---------------------------------------------------------------------------
+# Geography and latency
+# ---------------------------------------------------------------------------
+# site -> (lat, lon, area). Coordinates are rounded to ~10 km (0.1 deg).
+LOCATIONS = {
+    "LA":   (34.1, -118.4, "Los Angeles area"),
+    "NJ-1": (40.8, -74.1, "New Jersey, NYC metro"),
+    "NJ-2": (40.7, -74.2, "New Jersey, NYC metro"),
+    "NYC":  (40.8, -74.0, "New York City"),
+    "CT":   (41.1, -73.5, "Connecticut"),
+    "WDC":  (38.9, -77.0, "Washington, DC"),
+    "MIA":  (25.8, -80.4, "Miami area"),
+    "LON-1": (51.5, 0.0, "London area"),
+    "LON-2": (51.3, -0.6, "London area"),
+    "LON-3": (51.5, -0.3, "London area"),
+}
+# cloud on-ramp -> (lat, lon, assumed AWS region). Internet has no latency.
+CLOUD_LOCATIONS = {
+    "AWS East": (39.040, -77.490, "AWS us-east-1, Ashburn, VA"),
+    "AWS West": (45.840, -119.700, "AWS us-west-2, Oregon"),
+}
+ROUTE_FACTOR = 1.3        # fiber route vs. geometric path (slack, rights-of-way)
+FIBER_US_PER_KM = 4.9     # light in single-mode fiber (n ~ 1.468)
+DIVERSITY = 0.12          # lateral spacing between diverse routes, x link distance
+MIN_SPACING_KM, MAX_SPACING_KM = 3.0, 600.0
+INLAND = (38.5, -97.0)    # continental-US centre: North American bows head here
+EARTH_KM = 6371.0088
+
+
+def _ll(p):
+    return math.radians(p[0]), math.radians(p[1])
+
+
+def gc_km(p, q):
+    (la1, lo1), (la2, lo2) = _ll(p), _ll(q)
+    h = (math.sin((la2 - la1) / 2) ** 2
+         + math.cos(la1) * math.cos(la2) * math.sin((lo2 - lo1) / 2) ** 2)
+    return 2 * EARTH_KM * math.asin(math.sqrt(h))
+
+
+def _interp(p, q, f):
+    (la1, lo1), (la2, lo2) = _ll(p), _ll(q)
+    d = gc_km(p, q) / EARTH_KM
+    if d == 0:
+        return p
+    a, b = math.sin((1 - f) * d) / math.sin(d), math.sin(f * d) / math.sin(d)
+    x = a * math.cos(la1) * math.cos(lo1) + b * math.cos(la2) * math.cos(lo2)
+    y = a * math.cos(la1) * math.sin(lo1) + b * math.cos(la2) * math.sin(lo2)
+    z = a * math.sin(la1) + b * math.sin(la2)
+    return (math.degrees(math.atan2(z, math.hypot(x, y))),
+            math.degrees(math.atan2(y, x)))
+
+
+def _bearing(p, q):
+    (la1, lo1), (la2, lo2) = _ll(p), _ll(q)
+    return math.atan2(math.sin(lo2 - lo1) * math.cos(la2),
+                      math.cos(la1) * math.sin(la2)
+                      - math.sin(la1) * math.cos(la2) * math.cos(lo2 - lo1))
+
+
+def _dest(p, brg, km):
+    la, lo = _ll(p)
+    d = km / EARTH_KM
+    la2 = math.asin(math.sin(la) * math.cos(d) + math.cos(la) * math.sin(d) * math.cos(brg))
+    lo2 = lo + math.atan2(math.sin(brg) * math.sin(d) * math.cos(la),
+                          math.cos(d) - math.sin(la) * math.sin(la2))
+    return math.degrees(la2), (math.degrees(lo2) + 540) % 360 - 180
+
+
+def diverse_path(p, q, offset_km, steps=64):
+    """Great circle p->q bowed sideways by offset_km at the midpoint."""
+    pts = []
+    for i in range(steps + 1):
+        f = i / steps
+        c = _interp(p, q, f)
+        if offset_km and 0 < i < steps:
+            c = _dest(c, _bearing(c, q) + math.pi / 2,
+                      offset_km * math.sin(math.pi * f))
+        pts.append(c)
+    return pts
+
+
+def path_km(pts):
+    return sum(gc_km(a, b) for a, b in zip(pts, pts[1:]))
+
+
+def _loc(node):
+    if node in LOCATIONS:
+        return LOCATIONS[node][:2]
+    cloud = node.split(":", 1)[1]
+    return CLOUD_LOCATIONS[cloud][:2] if cloud in CLOUD_LOCATIONS else None
+
+
+def circuit_paths():
+    """One record per circuit (backbone + AWS), each on its own diverse path."""
+    links = [(a, b, n, "backbone") for a, b, n in BACKBONE]
+    links += [(s, f"{s}:{c}", n, "cloud") for s, c, _, n in CLOUDS if c in CLOUD_LOCATIONS]
+    rows = []
+    for a, b, n, kind in links:
+        p, q = _loc(a), _loc(b)
+        d = gc_km(p, q)
+        spacing = min(max(DIVERSITY * d, MIN_SPACING_KM), MAX_SPACING_KM)
+        side = 1
+        if p[1] < -50 and q[1] < -50:      # both ends in North America: bow inland
+            mid = _interp(p, q, 0.5)
+            right = _dest(mid, _bearing(mid, q) + math.pi / 2, spacing)
+            side = 1 if gc_km(right, INLAND) < gc_km(mid, INLAND) else -1
+        for k in range(n):
+            off = side * k * spacing       # circuit 1 direct, then 1, 2, 3 x spacing
+            pts = diverse_path(p, q, off)
+            route = path_km(pts) * ROUTE_FACTOR
+            rows.append(dict(a=a, b=b, z=b.split(":", 1)[-1], kind=kind,
+                             circuit=k + 1, of=n, gc_km=d, offset_km=off,
+                             route_km=route,
+                             ms=route * FIBER_US_PER_KM / 1000, path=pts))
+    return rows
+
+
+def link_latency():
+    """(a, b) -> (min_ms, max_ms) across that link's circuits."""
+    out = {}
+    for r in circuit_paths():
+        lo, hi = out.get((r["a"], r["b"]), (1e9, 0))
+        out[(r["a"], r["b"])] = (min(lo, r["ms"]), max(hi, r["ms"]))
+    return out
+
+
+def fmt_ms(x):
+    return f"{x:.2f}" if x < 1 else f"{x:.1f}"
+
+
+def link_label(a, b, n, lat=None):
+    lat = link_latency() if lat is None else lat
+    key = (a, b) if (a, b) in lat else (b, a)
+    if key not in lat:
+        return str(n)
+    lo, hi = lat[key]
+    span = fmt_ms(lo) if fmt_ms(lo) == fmt_ms(hi) else f"{fmt_ms(lo)}–{fmt_ms(hi)}"
+    return f"{n} | {span} ms"
+
 
 # ---------------------------------------------------------------------------
 # Drawing constants
@@ -160,6 +311,89 @@ def check_visibility(g):
     return problems
 
 
+def _seg_rect(p, q, r):
+    """Does segment p-q cross rectangle r = (x0, y0, x1, y1)? (Liang-Barsky)"""
+    (x1, y1), (x2, y2) = p, q
+    dx, dy = x2 - x1, y2 - y1
+    t0, t1 = 0.0, 1.0
+    for pv, qv in ((-dx, x1 - r[0]), (dx, r[2] - x1), (-dy, y1 - r[1]), (dy, r[3] - y1)):
+        if pv == 0:
+            if qv < 0:
+                return False
+            continue
+        t = qv / pv
+        if pv < 0:
+            t0 = max(t0, t)
+        else:
+            t1 = min(t1, t)
+        if t0 > t1:
+            return False
+    return True
+
+
+def label_size(txt):
+    if txt.isdigit():
+        return 26, 30
+    return 7.6 * len(txt) + 14, 26
+
+
+def place_labels(g):
+    """(a, b) -> (x, y, text): put each count/latency label where it crosses
+    the fewest other lines, nodes, badges and already-placed labels."""
+    pos = nx.get_node_attributes(g, "pos")
+    lat = link_latency()
+    links = {}
+    for a, b, d in g.edges(data=True):
+        links.setdefault((a, b), d)
+    segs = [((a, b), pos[a], pos[b]) for a, b in links]
+    for members, pad, *_ in REGIONS.values():
+        x0, y0, x1, y1 = region_box(members, pad)
+        for p, q in (((x0, y0), (x1, y0)), ((x1, y0), (x1, y1)),
+                     ((x1, y1), (x0, y1)), ((x0, y1), (x0, y0))):
+            segs.append((None, p, q))
+    blocks = []
+    for n, d in g.nodes(data=True):
+        x, y = pos[n]
+        if d["kind"] == "site":
+            blocks.append((x - SITE_R, y - SITE_R, x + SITE_R, y + SITE_R))
+            if d["cgx"]:
+                bx, by = CGX_BADGE.get(n, (0.9, -0.95))
+                cx, cy = x + SITE_R * bx, y + SITE_R * by
+                blocks.append((cx - 30, cy - 18, cx + 30, cy + 18))
+        else:
+            blocks.append((x - CLOUD_W / 2, y - CLOUD_H / 2, x + CLOUD_W / 2, y + CLOUD_H / 2))
+    for name, (members, pad, lt, edge) in REGIONS.items():
+        x0, y0, x1, y1 = region_box(members, pad)
+        lx, ly = x0 + (x1 - x0) * lt, (y0 if edge == "top" else y1)
+        blocks.append((lx - 70, ly - 18, lx + 70, ly + 18))
+
+    def overlap(r, o):
+        return r[0] < o[2] and o[0] < r[2] and r[1] < o[3] and o[1] < r[3]
+
+    order = sorted(links, key=lambda k: -len(link_label(*k, links[k]["of"], lat)))
+    placed = {}
+    for a, b in order:
+        n = links[(a, b)]["of"]
+        txt = link_label(a, b, n, lat)
+        w, h = label_size(txt)
+        (x1, y1), (x2, y2) = pos[a], pos[b]
+        best = None
+        pref = LABEL_T.get((a, b), 0.5 if links[(a, b)]["kind"] == "backbone" else 0.55)
+        for i in range(0, 61):
+            t = 0.2 + i * 0.01
+            lx, ly = x1 + (x2 - x1) * t, y1 + (y2 - y1) * t
+            r = (lx - w / 2 - 4, ly - h / 2 - 4, lx + w / 2 + 4, ly + h / 2 + 4)
+            cost = abs(t - pref) * 2
+            cost += sum(100 for o in blocks if overlap(r, o))
+            cost += sum(10 for k, p, q in segs if k != (a, b) and _seg_rect(p, q, r))
+            if cost < (best[0] if best else 1e9):
+                best = (cost, lx, ly, r)
+        _, lx, ly, r = best
+        blocks.append(r)
+        placed[(a, b)] = (lx, ly, txt)
+    return placed
+
+
 def draw(g, out):
     pos = nx.get_node_attributes(g, "pos")
     fig, ax = plt.subplots(figsize=(25, 18.75))
@@ -178,6 +412,7 @@ def draw(g, out):
     links = {}
     for a, b, d in g.edges(data=True):
         links.setdefault((a, b), d)
+    labels = place_labels(g)
 
     for (a, b), d in links.items():
         n = d["of"]
@@ -188,9 +423,9 @@ def draw(g, out):
             ax.plot([x1 + nx_ * off, x2 + nx_ * off],
                     [y1 + ny_ * off, y2 + ny_ * off],
                     color=BLACK, lw=2.0, solid_capstyle="butt", zorder=1)
-        t = LABEL_T.get((a, b), 0.5 if d["kind"] == "backbone" else 0.55)
-        lx, ly = x1 + (x2 - x1) * t, y1 + (y2 - y1) * t
-        ax.text(lx, ly, str(n), ha="center", va="center", fontsize=14,
+        lx, ly, txt = labels[(a, b)]
+        ax.text(lx, ly, txt, ha="center", va="center",
+                fontsize=14 if txt.isdigit() else 11,
                 fontweight="bold", color=BLACK, zorder=3,
                 bbox=dict(boxstyle="round,pad=0.2", fc="white",
                           ec=BLACK, lw=1.2))
@@ -250,6 +485,19 @@ def report(g):
     print(f"Min link cut (edge connectivity): {nx.edge_connectivity(simple)}")
     single = [f"{a}-{b}" for a, b, n in BACKBONE if n == 1]
     print(f"Single-circuit links: {', '.join(single)}")
+
+    print("\nEstimated one-way latency (each circuit on its own diverse path)")
+    print(f"  route = diverse path x {ROUTE_FACTOR}, {FIBER_US_PER_KM} us/km fiber")
+    print(f"  {'Link':16} {'Ckts':>4} {'GC km':>7} {'Route km':>17} {'One-way ms':>14}")
+    by_link = {}
+    for r in circuit_paths():
+        by_link.setdefault((r["a"], r["z"]), []).append(r)
+    for (a, z), rs in sorted(by_link.items(), key=lambda kv: kv[1][0]["ms"]):
+        km = [r["route_km"] for r in rs]
+        ms = [r["ms"] for r in rs]
+        kmr = f"{min(km):,.0f}" if len(rs) == 1 else f"{min(km):,.0f}-{max(km):,.0f}"
+        msr = fmt_ms(min(ms)) if len(rs) == 1 else f"{fmt_ms(min(ms))}-{fmt_ms(max(ms))}"
+        print(f"  {a + '-' + z:16} {len(rs):>4} {rs[0]['gc_km']:>7,.0f} {kmr:>17} {msr:>14}")
 
 
 if __name__ == "__main__":
