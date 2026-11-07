@@ -11,14 +11,16 @@ NetworkX model of a low-latency premises-to-cloud backbone. It has ten sites wit
 | `lowlatency_plan1_model.py` | Builds the graph, prints the resilience report, checks line and region visibility, and renders the PNG |
 | `export_drawio.py` | Writes the same model as an uncompressed draw.io file (opens in draw.io and imports into Lucidchart), including the region boxes |
 | `export_kmz.py` | Writes every estimated circuit path to a KMZ for Google Earth, plus the per-circuit path table as Markdown and CSV |
+| `render_paths.py` | Renders the same paths as map images: overview, continental US, NJ/NYC metro and London (basemap: public-domain Natural Earth, downloaded on first run) |
 | `lowlatency_plan1_model.png`, `lowlatency_plan1.drawio`, `report.txt` | Generated drawing, draw.io file and report |
-| `lowlatency_plan1_paths.kmz`, [`circuit_paths.md`](circuit_paths.md), `circuit_paths.csv` | Generated circuit paths and path table |
+| `lowlatency_plan1_paths.kmz`, [`circuit_paths.md`](circuit_paths.md), `circuit_paths.csv`, `paths_*.png` | Generated circuit paths, path table and path maps |
 
 ```bash
 pip install networkx matplotlib
 python lowlatency-plan1/lowlatency_plan1_model.py
 python lowlatency-plan1/export_drawio.py
 python lowlatency-plan1/export_kmz.py
+python lowlatency-plan1/render_paths.py
 ```
 
 ## The network
@@ -73,6 +75,18 @@ Each link label on the drawing reads `circuits | one-way ms`. It shows a range w
 | NJ-2–LON-2 | Backbone | 1 | 5,560 | 7,228 | 35.4 |
 | NJ-1–LON-1 | Backbone | 1 | 5,579 | 7,253 | 35.5 |
 | NJ-2–LON-1 | Backbone | 1 | 5,593 | 7,270 | 35.6 |
+
+### Path maps
+
+The same paths as the KMZ, drawn on a map. Circuit 1 (blue) is the direct route; red, green and orange are the diverse routes. Each map lists its links and latency on the right. Faint lines are links that leave that map. Site positions are rounded to about 10 km.
+
+![All circuit paths](paths_overview.png)
+
+![Continental US circuit paths](paths_us.png)
+
+![NJ Metro, NYC and CT circuit paths](paths_nj_metro.png)
+
+![London circuit paths](paths_london.png)
 
 Every circuit's path is a placemark in `lowlatency_plan1_paths.kmz`, colour-coded by circuit (1 = blue, 2 = red, 3 = green, 4 = orange). The per-circuit table is in [`circuit_paths.md`](circuit_paths.md) and `circuit_paths.csv`.
 
