@@ -39,16 +39,16 @@ TITLE = "Low Latency Prem-to-Cloud Plan1"
 SITES = {
     # compressed geography: LA west, NJ Metro / NYC / CT northeast,
     # WDC and MIA down the east coast, London across the Atlantic
-    "LA":   ((250, 1000), True),
-    "NJ-1": ((760, 320), True),
-    "NJ-2": ((900, 520), False),
-    "NYC":  ((1040, 120), False),
-    "CT":   ((1280, 200), False),
-    "WDC":  ((720, 900), False),
-    "MIA":  ((900, 1330), True),
-    "LON-1":  ((1760, 330), True),
-    "LON-2":  ((1860, 640), True),
-    "LON-3":  ((2130, 470), False),
+    "LA":   ((338, 1350), True),
+    "NJ-1": ((1026, 432), True),
+    "NJ-2": ((1215, 702), False),
+    "NYC":  ((1404, 162), False),
+    "CT":   ((1728, 270), False),
+    "WDC":  ((972, 1215), False),
+    "MIA":  ((1215, 1796), True),
+    "LON-1":  ((2376, 446), True),
+    "LON-2":  ((2511, 864), True),
+    "LON-3":  ((2876, 634), False),
 }
 
 BACKBONE = [
@@ -77,15 +77,15 @@ BACKBONE = [
 ]
 
 CLOUDS = [
-    ("NJ-1", "Internet",  (760, 60), 2),
-    ("NJ-1", "AWS West",  (330, 250), 2),
-    ("NJ-2", "AWS East",  (1110, 690), 2),
-    ("CT",   "Internet",  (1480, 120), 2),
-    ("LA",   "AWS West",  (90, 860), 2),
-    ("LA",   "Internet",  (90, 1130), 2),
-    ("MIA",  "AWS East",  (1160, 1420), 2),
-    ("MIA",  "Internet",  (640, 1460), 2),
-    ("LON-2",  "Internet",  (1880, 870), 2),
+    ("NJ-1", "Internet",  (1026, 81), 2),
+    ("NJ-1", "AWS West",  (446, 338), 2),
+    ("NJ-2", "AWS East",  (1498, 932), 2),
+    ("CT",   "Internet",  (1998, 162), 2),
+    ("LA",   "AWS West",  (122, 1161), 2),
+    ("LA",   "Internet",  (122, 1526), 2),
+    ("MIA",  "AWS East",  (1566, 1917), 2),
+    ("MIA",  "Internet",  (864, 1971), 2),
+    ("LON-2",  "Internet",  (2538, 1174), 2),
 ]
 
 # Dotted region boxes: name -> (member sites, padding, label x-fraction,
@@ -246,6 +246,7 @@ SITE_R = 52
 CIRCUIT_GAP = 11
 CLOUD_W, CLOUD_H = 128, 70
 BLACK = "#1a1a1a"
+UNITS_PER_INCH = 92   # drawing units per inch: keeps sites, labels and fonts the same size
 
 
 def build_graph():
@@ -396,7 +397,10 @@ def place_labels(g):
 
 def draw(g, out):
     pos = nx.get_node_attributes(g, "pos")
-    fig, ax = plt.subplots(figsize=(25, 18.75))
+    pos0 = list(pos.values())
+    span_x = max(p[0] for p in pos0) - min(p[0] for p in pos0) + 220
+    span_y = max(p[1] for p in pos0) - min(p[1] for p in pos0) + 220
+    fig, ax = plt.subplots(figsize=(span_x / UNITS_PER_INCH, span_y / UNITS_PER_INCH))
     ax.set_aspect("equal")
     ax.axis("off")
 
