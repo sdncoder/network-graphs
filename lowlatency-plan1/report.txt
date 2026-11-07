@@ -1,0 +1,26 @@
+Low Latency Prem-to-Cloud Plan1
+Sites: 10   Clouds: 9
+Backbone links: 22   circuits: 34
+Cloud/Internet links: 9   circuits: 18
+Total circuits: 52
+Region London: TEL, WOK, OST
+Region NJ Metro: SEC2, HAL2
+
+Backbone circuits per site:
+  SEC2  13 circuits to 8 sites
+  HAL2  12 circuits to 8 sites
+  LA     9 circuits to 4 sites
+  MIA    9 circuits to 4 sites
+  NYC    5 circuits to 4 sites
+  CT     5 circuits to 3 sites
+  TEL    5 circuits to 4 sites
+  WOK    5 circuits to 4 sites
+  WDC    3 circuits to 3 sites
+  OST    2 circuits to 2 sites
+
+Backbone articulation points: none
+Min site cut (node connectivity): 2
+Min link cut (edge connectivity): 2
+Single-circuit links: SEC2-TEL, SEC2-WDC, SEC2-WOK, HAL2-NYC, NYC-LA, NYC-CT, HAL2-TEL, HAL2-WDC, WDC-MIA, HAL2-WOK, TEL-OST, WOK-OST
+
+Line visibility: all clear
