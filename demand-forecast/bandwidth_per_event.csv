@@ -1,5 +1,0 @@
-date,event,network,remote,carrier,tx_start,tx_end,epl_mbps,hsip_mbps,tx_assigned,tx_slots,up_assigned_mbps,up_spare_mbps,rx_assigned,rx_slots,down_assigned_mbps,needed_mbps,full_build_mbps,fiber_usable_mbps,hsip_util,hsip_full_util,liveu_up,liveu_down
-2026-11-08,Live event 1 · Week 1,Peacock - NBCSN,Remote 1,Lumen,2026-11-08 10:00,2026-11-08 23:59,500.0,500.0,10,15,400,200,2,5,80,900.0,1100.0,1000.0,0.8,1.2,4,1
-2026-11-10,Live event 2 · Week 2,Peacock - DTV - NBCSN,Remote 2,Lumen,2026-11-09 06:00,2026-11-11 06:00,1000.0,1000.0,12,15,480,120,2,5,80,1480.0,1600.0,2000.0,0.48,0.6,4,1
-2026-11-13,Live event 3 · Week 1,Peacock & NBCSN,Remote 3,AT&T,2026-11-13 10:00,2026-11-14 00:59,1000.0,1000.0,9,15,360,240,2,5,80,1360.0,1600.0,2000.0,0.36,0.6,0,0
-2026-11-14,Live event 4 · Week 2,NBC,Remote 4,Frontier/Segra,2026-11-13 10:00,2026-11-14 20:00,500.0,500.0,10,15,400,200,2,5,80,900.0,1100.0,1000.0,0.8,1.2,4,0
