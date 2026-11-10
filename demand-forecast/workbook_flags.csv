@@ -1,10 +1,10 @@
 date,event,flag
-2026-11-08,MCBB Big East · Week 1,all 15 TX slots (600 Mbps) would exceed the 500 Mbps HSIP
-2026-11-10,MCBB Big 12 · Week 2,"rows 3.13, 3.14, 3.15, 3.16, 4.3, 4.4, 4.5 still name another venue (copied from another event)"
-2026-11-10,MCBB Big 12 · Week 2,rows 3.13 repeat a truck slot already listed (counted once)
-2026-11-13,MCBB B1G · Week 1,"rows 3.11, 3.12, 3.13, 3.14, 3.15, 3.16, 4.3, 4.4, 4.5 still name truck Whiskey (copied from another event)"
-2026-11-13,MCBB B1G · Week 1,rows 3.11 repeat a truck slot already listed (counted once)
-2026-11-14,WCBB Big East · Week 2,"rows 3.11, 3.12, 3.13, 3.14, 3.15, 3.16, 4.3, 4.4, 4.5 still name truck Gemini (copied from another event)"
-2026-11-14,WCBB Big East · Week 2,rows 3.11 repeat a truck slot already listed (counted once)
-2026-11-14,WCBB Big East · Week 2,HSIP ordered at 1000 Mbps but only 500 usable (origin-port note)
-2026-11-14,WCBB Big East · Week 2,all 15 TX slots (600 Mbps) would exceed the 500 Mbps HSIP
+2026-11-08,Live event 1 · Week 1,all 15 TX slots (600 Mbps) would exceed the 500 Mbps HSIP
+2026-11-10,Live event 2 · Week 2,"rows 3.13, 3.14, 3.15, 3.16, 4.3, 4.4, 4.5 still name another venue (copied from another event)"
+2026-11-10,Live event 2 · Week 2,rows 3.13 repeat a remote TX/RX slot already listed (counted once)
+2026-11-13,Live event 3 · Week 1,"rows 3.11, 3.12, 3.13, 3.14, 3.15, 3.16, 4.3, 4.4, 4.5 still name another remote's ports (copied from another event)"
+2026-11-13,Live event 3 · Week 1,rows 3.11 repeat a remote TX/RX slot already listed (counted once)
+2026-11-14,Live event 4 · Week 2,"rows 3.11, 3.12, 3.13, 3.14, 3.15, 3.16, 4.3, 4.4, 4.5 still name another remote's ports (copied from another event)"
+2026-11-14,Live event 4 · Week 2,rows 3.11 repeat a remote TX/RX slot already listed (counted once)
+2026-11-14,Live event 4 · Week 2,HSIP ordered at 1000 Mbps but only 500 usable (origin-port note)
+2026-11-14,Live event 4 · Week 2,all 15 TX slots (600 Mbps) would exceed the 500 Mbps HSIP

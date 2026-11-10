@@ -2,8 +2,8 @@
 demand-forecast — NetworkX model of per-event bandwidth from the BOC
 event workbooks (demand-forecast/*.xlsx).
 
-Each workbook is one remote production. The program reads two sheets:
-  * BOC          event name, date, game time, TX window, network, truck, PCRs
+Each workbook is one remote live sports production. The program reads two sheets:
+  * BOC          event name, date, game time, TX window, network, remote (truck), PCRs
   * Connectivity data circuits (EPL, Bitfire HSIP), Bitfire streams in each
                  direction, bonded-cellular (LiveU) streams
 
@@ -12,15 +12,15 @@ Bandwidth rules (all in Mbps)
     such as "WE TAKE 500MB" caps the usable rate at that figure.
   * A Bitfire stream marked "*40" is 40 Mbps.
   * A stream is ASSIGNED when it has a description (other than "Unassigned")
-    or a destination port; otherwise it is a SPARE encoder slot on the truck.
+    or a destination port; otherwise it is a SPARE encoder slot on the remote.
   * Needed  = EPL data + assigned Bitfire streams (site -> CT Prod Hub).
   * Full build = EPL data + every Bitfire slot listed (assigned + spare).
   * Bonded cellular (LiveU) rides the cellular network, not the fiber, and
     is reported separately.
 
 Every circuit and every stream is its own edge in a MultiGraph:
-    TRUCK -- carrier -- CT PROD HUB   (EPL, HSIP circuit, one edge per stream)
-    TRUCK -- LiveU cellular -- CT PROD HUB
+    REMOTE -- carrier -- CT PROD HUB   (EPL, HSIP circuit, one edge per stream)
+    REMOTE -- LiveU cellular -- CT PROD HUB
 
 Graphics (straight lines only, every line checked for visibility):
   * bandwidth_per_event.png   stacked bars: needed vs full build vs circuit
@@ -50,7 +50,7 @@ from matplotlib.patches import Circle, FancyBboxPatch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 STREAM_MBPS = 40           # "*40" Bitfire stream
-HUB = "CT Prod Hub"        # production hub the trucks feed (sanitized name)
+HUB = "CT Prod Hub"        # production hub the remotes feed (sanitized name)
 YEAR = 2026
 BLACK = "#1a1a1a"
 C_EPL, C_UP, C_SPARE, C_DOWN, C_CELL = "#2a6f97", "#c8553d", "#e9b8a9", "#588157", "#8a6fb3"
@@ -154,7 +154,7 @@ def load_event(path):
     boc = boc_fields(wb["BOC"])
     rows = connectivity(wb["Connectivity"])
     start, end = parse_window(boc.get("TX WINDOW", ""))
-    truck = re.sub(r"^(GCV|GVC|LMG)\s*-?\s*", "", boc.get("TRUCK", ""), flags=re.I).strip()
+    truck = re.sub(r"^[A-Z]{3}\s*-?\s*(?=\S)", "", boc.get("TRUCK", "").upper()).strip()   # drop vendor prefix
     ev = dict(file=os.path.basename(path), series=boc["SERIES"], matchup=event_type(path, boc["WEEK"]),
               date=boc.get("DATE", ""), game_time=boc.get("GAME TIME", ""),
               network=boc.get("NETWORK", ""), truck=boc.get("TRUCK", ""), truck_short=truck,
@@ -202,7 +202,7 @@ def load_event(path):
             u = (port + " " + r["route"]).upper()
             if truck and port and truck_key(truck) not in port.upper():
                 who = truck_key(re.sub(r"\s*[TR]X.*$", "", port.upper()))
-                others.setdefault(f"truck {who.title()}", []).append(r["label"])
+                others.setdefault("another remote's ports", []).append(r["label"])
             elif ev["venue"] and ev["venue"].upper() not in u:
                 hops = [p for p in r["route"].upper().split(">") if "BITFIRE" in p]
                 who = hops[:1] if r["section"] == "bf_up" else hops[-1:]
@@ -212,7 +212,7 @@ def load_event(path):
         ev["flags"].append(f"rows {', '.join(sorted(set(labs)))} still name {who} (copied from another event)")
     dups = [r["label"] for r in rows if r["dup"]]
     if dups:
-        ev["flags"].append(f"rows {', '.join(dups)} repeat a truck slot already listed (counted once)")
+        ev["flags"].append(f"rows {', '.join(dups)} repeat a remote TX/RX slot already listed (counted once)")
     rows[:] = [r for r in rows if not r["dup"]]
 
     up = [r for r in rows if r["section"] == "bf_up"]
@@ -241,16 +241,17 @@ def load_event(path):
 
 
 def event_type(path, series):
-    """'MCBB Big East · Week 1' from the file name and BOC series; no team names."""
-    m = re.search(r"\b([MW]CBB)\b", os.path.basename(path).replace("_", " ").upper())
-    kind = m.group(1) if m else "CBB"
-    conf = re.sub(r"\s*Basketball.*$", "", series, flags=re.I).strip()
+    """'Week 1' from the BOC series line; no sport, league or team names.
+    Events are numbered 'Live event 1..n' in date order once all are loaded."""
     wk = re.search(r"WEEK\s*(\d+)", series, re.I)
-    return f"{kind} {conf}" + (f" · Week {wk.group(1)}" if wk else "")
+    return f"Week {wk.group(1)}" if wk else ""
 
 
 def truck_key(truck):
-    words = [w for w in re.findall(r"[A-Z]{2,}", truck.upper()) if w not in ("GCV", "GVC", "LMG")]
+    """Distinctive word of a remote's name (vendor prefix skipped) for port matching."""
+    words = re.findall(r"[A-Z]{2,}", truck.upper())
+    if len(words) > 1 and len(words[0]) == 3:
+        words = words[1:]
     return words[0] if words else truck.upper()
 
 
@@ -309,7 +310,7 @@ def draw_bars(events, out):
     y = range(len(events))
     left = [0] * len(events)
     for key, color, lab in (("epl", C_EPL, "EPL data"), ("up_assigned", C_UP, "Assigned Bitfire streams"),
-                            ("up_spare", C_SPARE, "Spare truck TX slots")):
+                            ("up_spare", C_SPARE, "Spare remote TX slots")):
         vals = [ev[key] for ev in events]
         ax.barh(y, vals, left=left, color=color, height=0.52, label=lab, edgecolor="white", lw=1)
         left = [a + b for a, b in zip(left, vals)]
@@ -504,7 +505,7 @@ def report(events, g, peak, vis):
     w(f"Bitfire stream = {STREAM_MBPS} Mbps.  Needed = EPL + assigned site->CT Prod Hub streams.")
     w(f"Graph: {g.number_of_nodes()} nodes, {g.number_of_edges()} edges (one per circuit or stream per hop)")
     w("")
-    w(f"{'Date':6} {'Event':32} {'Truck':14} {'EPL':>5} {'HSIP':>5} {'TX a/t':>7} {'Up':>5} "
+    w(f"{'Date':6} {'Event':32} {'Remote':14} {'EPL':>5} {'HSIP':>5} {'TX a/t':>7} {'Up':>5} "
       f"{'RX a/t':>7} {'Down':>5} {'Needed':>7} {'Full':>6} {'HSIP%':>6} {'Full%':>6} Cell")
     for ev in events:
         w(f"{ev['game_day']:%m/%d} {ev['matchup'][:32]:32} {ev['truck'][:14]:14} {ev['epl']:5.0f} "
@@ -526,7 +527,7 @@ def report(events, g, peak, vis):
 
 
 def write_csv(events, path):
-    cols = ["date", "event", "network", "truck", "carrier", "tx_start", "tx_end", "epl_mbps",
+    cols = ["date", "event", "network", "remote", "carrier", "tx_start", "tx_end", "epl_mbps",
             "hsip_mbps", "tx_assigned", "tx_slots", "up_assigned_mbps", "up_spare_mbps",
             "rx_assigned", "rx_slots", "down_assigned_mbps", "needed_mbps", "full_build_mbps",
             "fiber_usable_mbps", "hsip_util", "hsip_full_util", "liveu_up", "liveu_down"]
@@ -550,6 +551,9 @@ def main(argv=None):
     files = a.xlsx or sorted(glob.glob(os.path.join(HERE, "*.xlsx")))
     os.makedirs(a.out, exist_ok=True)
     events = sorted((load_event(f) for f in files), key=lambda e: e["game_day"])
+    for i, ev in enumerate(events):
+        ev["matchup"] = f"Live event {i + 1}" + (f" · {ev['matchup']}" if ev["matchup"] else "")
+        ev["truck"] = ev["truck_short"] = f"Remote {i + 1}"   # sanitized: no truck or vendor names
     g = build_graph(events)
     vis = check_visibility(g, events)
     draw_bars(events, os.path.join(a.out, "bandwidth_per_event.png"))
