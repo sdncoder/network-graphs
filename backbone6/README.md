@@ -62,3 +62,7 @@ python backbone6_model.py Backbone-Split5.numbers backbone6_model.png
 
 The script prints node and link counts, the AWS homing, and tables of every
 Backbone1 and AWS link with its distance and latency.
+
+## Largest A/B latency differential (no link/node failure)
+
+![Largest A/B latency differential to AWS East](backbone6_ab_differential.png)
