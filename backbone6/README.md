@@ -62,3 +62,21 @@ python backbone6_model.py Backbone-Split5.numbers backbone6_model.png
 
 The script prints node and link counts, the AWS homing, and tables of every
 Backbone1 and AWS link with its distance and latency.
+
+## Diverse A/B paths to AWS East
+
+`diverse_paths.py` finds, for every Backbone1 site, the diverse Path A / Path B
+pair to AWS East (no shared links, transit sites or on-ramp) with the lowest
+combined latency, and the skew between them.
+
+**Highest differential: SEC1 — 19.1 ms** (A 2.2 ms direct; B 21.3 ms via DRT,
+ASH, MIA). SEC1 is itself an AWS East on-ramp, so this skew cannot be reduced.
+
+Full table: [diverse_paths_aws_east.md](diverse_paths_aws_east.md)
+(also [CSV](diverse_paths_aws_east.csv)).
+
+![SEC1 Path A (red) and Path B (blue)](diverse_paths_sec1.png)
+
+```bash
+python diverse_paths.py Backbone-Split5.numbers
+```
